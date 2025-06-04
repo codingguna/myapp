@@ -70,5 +70,4 @@ jobs:
         with:
           name: app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}
           path: |
-            release/app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}.aab
             release/app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}.apk
