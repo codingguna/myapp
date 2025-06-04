@@ -7,6 +7,7 @@
         android:label="myapp"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <service android:name="com.intive.geofence.service.ForegroundService" android:foregroundServiceType="location" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
