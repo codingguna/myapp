@@ -96,7 +96,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: Text('Geofence Example')),
         body: Center(child: Text('Geofence is running...')),
