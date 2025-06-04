@@ -1,8 +1,10 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geofence_service/geofence_service.dart';
 import 'package:geolocator/geolocator.dart' as geolocator;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -18,6 +20,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final geofenceService = GeofenceService.instance;
+  final List<String> geofenceEvents = [];
+  late SharedPreferences _prefs;
 
   final List<Geofence> geofenceList = [
     Geofence(
@@ -31,9 +35,28 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _loadGeofenceEvents();
 
     _setupGeofenceService();
     _startGeofenceService();
+  }
+
+  Future<void> _loadGeofenceEvents() async {
+    _prefs = await SharedPreferences.getInstance();
+    setState(() {
+      geofenceEvents.addAll(_prefs.getStringList('geofenceEvents') ?? []);
+    });
+  }
+
+  void _addGeofenceEvent(String event) {
+    setState(() {
+      geofenceEvents.add(event);
+    });
+    _saveGeofenceEvents();
+  }
+
+  void _saveGeofenceEvents() {
+    _prefs.setStringList('geofenceEvents', geofenceEvents);
   }
 
   void _setupGeofenceService() {
@@ -71,9 +94,11 @@ class _MyAppState extends State<MyApp> {
     GeofenceStatus geofenceStatus,
     Location location,
   ) async {
-    debugPrint(
-      'Geofence ${geofence.id} ${geofenceStatus.toString()} at ${location.latitude}, ${location.longitude}',
-    );
+    final event =
+        'Geofence ${geofence.id} ${geofenceStatus.toString()} at ${location.latitude}, ${location.longitude}';
+    debugPrint(event);
+    HapticFeedback.heavyImpact();
+    _addGeofenceEvent(event);
   }
 
   void _onLocationChanged(Location location) {
@@ -97,9 +122,22 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
-        appBar: AppBar(title: Text('Geofence Example')),
-        body: Center(child: Text('Geofence is running...')),
+        appBar: AppBar(
+          title: const Text('Geofence Example'),
+        ),
+        body: ListView.builder(
+          itemCount: geofenceEvents.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              leading: CircleAvatar(
+                child: Text('${index + 1}'),
+              ),
+              title: Text(geofenceEvents[index]),
+            );
+          },
+        ),
       ),
     );
   }
