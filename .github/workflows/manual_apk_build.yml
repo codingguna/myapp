@@ -1,0 +1,74 @@
+name: Manual Flutter APK Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_name:
+        description: 'Build name (e.g. 1.0.0)'
+        required: true
+        default: '1.0.0'
+      build_number:
+        description: 'Build number (e.g. 100 or timestamp)'
+        required: true
+        default: '1'
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.3'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build AAB
+        run: |
+          flutter build appbundle \
+            --release \
+            --build-name=${{ github.event.inputs.build_name }} \
+            --build-number=${{ github.event.inputs.build_number }} \
+            --tree-shake-icons
+
+      - name: Rename AAB with build info
+        run: |
+          mkdir -p release
+          cp build/app/outputs/bundle/release/app-release.aab \
+            release/app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}.aab
+
+      - name: Download bundletool
+        run: |
+          mkdir -p bundletool
+          curl -Lo bundletool/bundletool.jar https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
+
+      - name: Generate universal APK from AAB
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey \
+            -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+          java -jar bundletool/bundletool.jar build-apks \
+            --bundle=release/app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}.aab \
+            --output=release/app.apks \
+            --ks=debug.keystore \
+            --ks-key-alias=androiddebugkey \
+            --ks-pass=pass:android \
+            --key-pass=pass:android \
+            --mode=universal
+
+          unzip -o release/app.apks -d release
+          mv release/universal.apk release/app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}.apk
+
+      - name: Upload AAB and APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}
+          path: |
+            release/app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}.aab
+            release/app-${{ github.event.inputs.build_name }}-${{ github.event.inputs.build_number }}.apk
