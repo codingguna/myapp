@@ -26,9 +26,9 @@ class _MyAppState extends State<MyApp> {
   final List<Geofence> geofenceList = [
     Geofence(
       id: 'Home',
-      latitude: 37.4219983,
-      longitude: -122.084,
-      radius: [GeofenceRadius(id: 'radius_100m', length: 100)],
+      latitude: 12.085034,
+      longitude: 79.751019,
+      radius: [GeofenceRadius(id: 'radius_10m', length: 10)],
     ),
   ];
 
@@ -124,16 +124,12 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Geofence Example'),
-        ),
+        appBar: AppBar(title: const Text('Geofence Example')),
         body: ListView.builder(
           itemCount: geofenceEvents.length,
           itemBuilder: (context, index) {
             return ListTile(
-              leading: CircleAvatar(
-                child: Text('${index + 1}'),
-              ),
+              leading: CircleAvatar(child: Text('${index + 1}')),
               title: Text(geofenceEvents[index]),
             );
           },
